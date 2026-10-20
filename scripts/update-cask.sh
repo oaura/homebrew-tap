@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Points Casks/oaura.rb at the latest oAura GitHub release.
-# Usage: scripts/update-cask.sh [version]   (default: latest release)
+# Usage: scripts/update-cask.sh [version]   (default: latest release; FORCE=1 rewrites an up-to-date cask)
 # Needs: gh (authenticated, read access to oaura/oAura), shasum or sha256sum.
 set -euo pipefail
 repo=oaura/oAura
@@ -10,7 +10,7 @@ tag=${1:+v$1}
 tag=${tag:-$(gh release view -R "$repo" --json tagName -q .tagName)}
 version=${tag#v}
 current=$(sed -nE 's/^  version "([^"]+)"/\1/p' Casks/oaura.rb 2>/dev/null || true)
-if [[ "$current" == "$version" ]]; then
+if [[ "$current" == "$version" && -z "${FORCE:-}" ]]; then
   echo "Cask already at $version"
   exit 0
 fi
@@ -37,14 +37,15 @@ cask "oaura" do
     strategy :github_latest
   end
 
-  depends_on macos: ">= :sequoia"
+  depends_on macos: :sequoia
 
   app "oAura.app"
 
   # The app is ad-hoc signed, not notarized: clear the download quarantine so it opens.
-  postflight do
-    system_command "/usr/bin/xattr",
-                   args: ["-dr", "com.apple.quarantine", "#{appdir}/oAura.app"]
+  postflight_steps do
+    run "/usr/bin/xattr",
+        args:         ["-dr", "com.apple.quarantine", "{{appdir}}/oAura.app"],
+        must_succeed: false
   end
 
   zap trash: [

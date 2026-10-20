@@ -12,14 +12,15 @@ cask "oaura" do
     strategy :github_latest
   end
 
-  depends_on macos: ">= :sequoia"
+  depends_on macos: :sequoia
 
   app "oAura.app"
 
   # The app is ad-hoc signed, not notarized: clear the download quarantine so it opens.
-  postflight do
-    system_command "/usr/bin/xattr",
-                   args: ["-dr", "com.apple.quarantine", "#{appdir}/oAura.app"]
+  postflight_steps do
+    run "/usr/bin/xattr",
+        args:         ["-dr", "com.apple.quarantine", "{{appdir}}/oAura.app"],
+        must_succeed: false
   end
 
   zap trash: [
