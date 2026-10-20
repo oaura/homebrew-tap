@@ -31,7 +31,7 @@ jobs:
 
       - name: Commit
         run: |
-          git diff --quiet && { echo "No changes"; exit 0; }
+          [ -z "$(git status --porcelain Casks)" ] && { echo "No changes"; exit 0; }
           version=$(sed -nE 's/^  version "([^"]+)"/\1/p' Casks/oaura.rb)
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
