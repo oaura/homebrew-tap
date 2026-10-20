@@ -1,0 +1,40 @@
+name: Update cask
+
+# Follows new oAura releases. Runs every 3 hours and can be started manually
+# (Actions → Update cask → Run workflow) right after a release.
+on:
+  schedule:
+    - cron: "17 */3 * * *"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to pin (default: latest release)"
+        required: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-cask
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Update cask
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: scripts/update-cask.sh "${{ inputs.version }}"
+
+      - name: Commit
+        run: |
+          git diff --quiet && { echo "No changes"; exit 0; }
+          version=$(sed -nE 's/^  version "([^"]+)"/\1/p' Casks/oaura.rb)
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Casks/oaura.rb
+          git commit -m "oaura ${version}"
+          git push
