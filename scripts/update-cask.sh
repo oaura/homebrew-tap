@@ -21,6 +21,7 @@ trap 'rm -rf "$tmp"' EXIT
 gh release download "$tag" -R "$repo" -p "$asset" -D "$tmp"
 if command -v sha256sum >/dev/null; then sha=$(sha256sum "$tmp/$asset" | awk '{print $1}'); else sha=$(shasum -a 256 "$tmp/$asset" | awk '{print $1}'); fi
 
+mkdir -p Casks
 cat > Casks/oaura.rb <<CASK
 cask "oaura" do
   version "${version}"
